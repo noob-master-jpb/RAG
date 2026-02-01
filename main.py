@@ -8,7 +8,7 @@ from RAG import *
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I assist you today?"}]
 
-
+st.title("AI Chat with File Upload")
 
 def render_message(role: str, content: str):
     with st.chat_message(role):
