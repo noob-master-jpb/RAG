@@ -4,7 +4,7 @@ import time
 from RAG import *
 
 
-st.markdown("# DO NOT UPLOAD SENSITIVE FILES. THE DATABASE IS SHARED PUBLICLY")
+st.markdown("### DO NOT UPLOAD SENSITIVE FILES. THE DATABASE IS SHARED PUBLICLY")
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I assist you today?"}]
