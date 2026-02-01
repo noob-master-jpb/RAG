@@ -4,6 +4,8 @@ from pprint import pprint
 import os
 from dotenv import load_dotenv
 
+
+
 load_dotenv()
 
 GENAI_API_KEY = os.getenv("GENAI_API_KEY")
@@ -34,7 +36,7 @@ collection = client.get_or_create_collection(name = "data")
 data = open("test.txt", "r").read()
 
 
-def chunk_text(text, chunk_size=100, overlap=20):
+def chunk_text(text, chunk_size=20, overlap=5):
     chunks = []
     text = text.replace("\n", " ")
     text = text.split(" ")
@@ -42,6 +44,7 @@ def chunk_text(text, chunk_size=100, overlap=20):
         chunk = " ".join(text[i:i + chunk_size])
         chunks.append(chunk)
     return chunks
+
 # print(chunk_text(data))
 
 # chunks = chunk_text(data, chunk_size=20, overlap=5)
