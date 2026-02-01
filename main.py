@@ -21,7 +21,7 @@ def stream_response(text: str, delay: float = .065):
     for word in text.split():
         full_text += word + " "
         time.sleep(delay)
-        placeholder.markdown(full_text + "▌")
+        placeholder.markdown(full_text + " ")
 
     placeholder.markdown(full_text)
     return full_text
