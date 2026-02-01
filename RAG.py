@@ -15,9 +15,12 @@ DB_API_KEY = os.getenv("DB_API_KEY")
 DB_NAME = os.getenv("DB_NAME")
 DB_LOGIN_ID = os.getenv("DB_LOGIN_ID") # tenant id
 
+
 Ai = genai.Client(api_key=GENAI_API_KEY)
 
-
+# for i in list(Ai.models.list()):
+#     print(i.name)
+    
 def gemini(prompt):
     response = Ai.models.generate_content(
         model=GENAI_MODEL,
@@ -33,10 +36,7 @@ client = chromadb.CloudClient(
 
 collection = client.get_or_create_collection(name = "data")
 
-data = open("test.txt", "r").read()
-
-
-def chunk_text(text, chunk_size=20, overlap=5):
+def chunk_text(text, chunk_size=100, overlap=10):
     chunks = []
     text = text.replace("\n", " ")
     text = text.split(" ")
@@ -45,18 +45,21 @@ def chunk_text(text, chunk_size=20, overlap=5):
         chunks.append(chunk)
     return chunks
 
-# print(chunk_text(data))
+def load_data(chunks):
+    global collection
+    try:
+        for chunk in chunks:
+            collection.add(
+                documents=[chunk],
+                ids=[f"id_{hash(chunk)}"]
+            )
+        return True
+    except Exception as e:
+        print(f"Error loading data: {e}")
 
-# chunks = chunk_text(data, chunk_size=20, overlap=5)
-
-def load_data(chunks, collection):
-    for chunk in chunks:
-        collection.add(
-            documents=[chunk],
-            ids=[f"id_{hash(chunk)}"]
-        )
-
-def get_context(query, collection, n_results=4):
+def get_context(query, n_results=4):
+    global collection
+    
     result = collection.query(
         query_texts=[query],
         n_results=n_results
@@ -64,19 +67,34 @@ def get_context(query, collection, n_results=4):
     context = "\n".join([item for item in result['documents'][0]])
     return context
 
+def generate_response(query, past_messages= None):
+    global collection
+    context = get_context(query, n_results=4)
+    if past_messages:
+        past = ""
+        for msg in past_messages:
+            past += f"{msg['role']}: {msg['content']}\n"
+    else:
+        past = "no conversation yet"
+    prompt = f"""
+    Past conversation:
+    {past}
 
+    Context:
+    {context}
 
+    Question: {query}
+    
+    Guidelines:
+    Answer the question based on the context above. And do not mention about the context in the answer. And if the answer is not found in do not use the context but reply normally based on your knowledge.
+    Use markdown formatting for any code snippets in your response.
+    do not use any other formatting other than markdown unless required.
+    """
 
-query = "explain types of learining in detail"
+    return gemini(prompt)
 
-context = get_context(query, collection, n_results=4)
+# pprint(collection.query(
+#     query_texts=["What is bitnet"],
+#     n_results=5
+# ))
 
-prompt = f"""
-Context:
-{context}
-
-Question: {query}
-Answer the question based on the context above. And do not mention about the context in the answer.
-"""
-
-print(gemini(prompt))

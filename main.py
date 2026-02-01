@@ -1,15 +1,20 @@
+import fitz # pip install pymupdf
 import streamlit as st
-import random
 import time
+from RAG import *
+
+
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Hello! How can I assist you today?"}]
-    
+
+
+
 def render_message(role: str, content: str):
     with st.chat_message(role):
         st.markdown(content)
 
-def stream_response(text: str, delay: float = 0.05):
+def stream_response(text: str, delay: float = .065):
     placeholder = st.empty()
     full_text = ""
 
@@ -21,21 +26,35 @@ def stream_response(text: str, delay: float = 0.05):
     placeholder.markdown(full_text)
     return full_text
 
-def generate_response():
-    return random.choice(
-        [
-            "Hello there! How can I assist you today?",
-            "Hi, human! Is there anything I can help you with?",
-            "Do you need help?",
-        ]
-    )
 
-# if "upload" not in st.session_state:
-#     st.session_state.upload = False
-#     st.session_state.upload = st.button("Upload")
-# else:
-#     st.session_state.upload = True
+uploaded_file = st.file_uploader(
+    "Upload a file for your Ai knowledge base",
+    type=["txt",'pdf'],
+    key = "file_uploader"
+)    
     
+
+if uploaded_file is not None :
+    msg3 = st.empty()
+    if uploaded_file.type == "text/plain":
+        file_data = uploaded_file.read().decode("utf-8")
+        load_data(chunk_text(file_data))
+        msg3.success("File data loaded into the database!")
+        time.sleep(2)
+        msg3.empty()
+    elif uploaded_file.type == "application/pdf":
+        with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
+            text = ""
+            for i in range(len(doc)):
+                page = doc[i]
+                text += page.get_text("text")
+        load_data(chunk_text(text))
+        msg3.success("File data loaded into the database!")
+        time.sleep(2)
+        msg3.empty()
+
+
+
 if True:
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -45,20 +64,16 @@ if True:
 
 
     if prompt:
-        # Store & render user message
         st.session_state.messages.append(
             {"role": "user", "content": prompt}
         )
         render_message("user", prompt)
 
-        # Generate assistant response
-        assistant_text = generate_response()
+        assistant_text = generate_response(prompt,st.session_state.messages)
 
-        # Render assistant message with typing effect
         with st.chat_message("assistant"):
             final_response = stream_response(assistant_text)
 
-        # Store assistant message
         st.session_state.messages.append(
             {"role": "assistant", "content": final_response}
         )
