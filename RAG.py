@@ -57,7 +57,7 @@ def load_data(chunks):
     except Exception as e:
         print(f"Error loading data: {e}")
 
-def get_context(query, n_results=4):
+def get_context(query, n_results=8):
     global collection
     
     result = collection.query(
